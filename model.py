@@ -98,15 +98,15 @@ class BackboneNet(nn.Module):
     def forward(self, x):  # In: B x F x T
 
         x_drop = self.dropout(x.unsqueeze(3)).squeeze(3)
-        base_feature = self.base(x_drop)
+        base_feature = self.base(x_drop)  # (1,1024,70)-->(1,32,70)
 
         cls_features = []
         branch_scores = []
 
         for branch_idx in range(self.cls_branch_num):
 
-            cls_feature = self.cls_bottoms[branch_idx](base_feature)
-            cls_score = self.cls_heads[branch_idx](cls_feature.transpose(1, 2))
+            cls_feature = self.cls_bottoms[branch_idx](base_feature)  # (1,16,70)
+            cls_score = self.cls_heads[branch_idx](cls_feature.transpose(1, 2))  # (1,21,70)
 
             cls_features.append(cls_feature)
             branch_scores.append(cls_score)
