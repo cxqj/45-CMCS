@@ -19,7 +19,7 @@ import pdb
 
 ################ Config ##########################
 
-
+# 加载训练和测试参数
 def load_config_file(config_file):
     '''
     -- Doc for parameters in the json file --
@@ -59,28 +59,25 @@ def load_config_file(config_file):
 
     all_params = json.load(open(config_file))
 
-    dataset_name = all_params['dataset_name']
-    feature_type = all_params['feature_type']
+    dataset_name = all_params['dataset_name']  # thumos14
+    feature_type = all_params['feature_type']  # i3d
 
     all_params['file_paths'] = all_params['file_paths'][dataset_name]
-    all_params['action_class_num'] = all_params['action_class_num'][
-        dataset_name]
-    all_params['base_sample_rate'] = all_params['base_sample_rate'][
-        dataset_name][feature_type]
-    all_params['base_snippet_size'] = all_params['base_snippet_size'][
-        feature_type]
+    all_params['action_class_num'] = all_params['action_class_num'][dataset_name]  # 20
+    all_params['base_sample_rate'] = all_params['base_sample_rate'][dataset_name][feature_type]  # 4
+    all_params['base_snippet_size'] = all_params['base_snippet_size'][feature_type]  # 16
 
     assert (all_params['sample_rate'] % all_params['base_sample_rate'] == 0)
 
-    all_params['model_class_num'] = all_params['action_class_num']
+    all_params['model_class_num'] = all_params['action_class_num']  # 20
     if all_params['with_bg']:
-        all_params['model_class_num'] += 1
+        all_params['model_class_num'] += 1  # 加入背景类别  20+1
 
-    all_params['model_params']['class_num'] = all_params['model_class_num']
+    all_params['model_params']['class_num'] = all_params['model_class_num']  # 21  更新模型里的类别数
 
     # Convert second to frames
     all_params['detect_params']['proc_value'] = int(
-        all_params['detect_params']['proc_value'] * all_params['sample_rate'])
+        all_params['detect_params']['proc_value'] * all_params['sample_rate'])  # 1.25 * 16= 20  啥意思？？
 
     print(all_params)
     return all_params
@@ -298,16 +295,16 @@ def __load_features(
         dataset_dict,  # dataset_dict will be modified
         dataset_name,
         feature_type,
-        sample_rate,
-        base_sample_rate,
-        temporal_aug,
+        sample_rate,   # 16
+        base_sample_rate,  # 4
+        temporal_aug,   # True
         rgb_feature_dir,
         flow_feature_dir):
 
     assert (feature_type in ['i3d', 'untri'])
 
     assert (sample_rate % base_sample_rate == 0)
-    f_sample_rate = int(sample_rate / base_sample_rate)
+    f_sample_rate = int(sample_rate / base_sample_rate)   # 4
 
     # sample_rate of feature sequences, not original video
 
@@ -317,39 +314,40 @@ def __load_features(
 
         feature_data = np.load(filename)
 
-        frame_cnt = feature_data['frame_cnt'].item()
+        frame_cnt = feature_data['frame_cnt'].item()  # 5143
 
         if feature_type == 'untri':
             feature = np.swapaxes(feature_data['feature'][:, :, :, 0, 0], 0, 1)
         elif feature_type == 'i3d':
-            feature = feature_data['feature']
-
+            feature = feature_data['feature']   # (10,1282,1024)
+  
         # Feature: (B, T, F)
         # Example: (1, 249, 1024) or (10, 249, 1024) (Oversample)
 
+        # 把特征切成四分份？？
         if temporal_aug:  # Data augmentation with temporal offsets
             feature = [
                 feature[:, offset::f_sample_rate, :]
                 for offset in range(f_sample_rate)
-            ]
+            ]  # [(10,321,1024),(10,321,1024),(10,320,1024),(10,320,1024)]
             # Cut to same length, OK when training
             min_len = int(min([i.shape[1] for i in feature]))
-            feature = [i[:, :min_len, :] for i in feature]
+            feature = [i[:, :min_len, :] for i in feature]  # [(10,320,1024),(10,320,1024),(10,320,1024),(10,320,1024)]
 
-            assert (len(set([i.shape[1] for i in feature])) == 1)
-            feature = np.concatenate(feature, axis=0)
+            assert (len(set([i.shape[1] for i in feature])) == 1)  # 保证所有的特征长度一致
+            feature = np.concatenate(feature, axis=0)  # (40,320,1024)
 
         else:
             feature = feature[:, ::f_sample_rate, :]
 
-        return feature, frame_cnt
+        return feature, frame_cnt  # (40,320,1024), 5132
 
         # Feature: (B x f_sample_rate, T, F)
 
     ###############
 
     # Load all features
-    for k in dataset_dict.keys():
+    for k in dataset_dict.keys():   # k is video name
 
         print('Loading: {}'.format(k))
 
@@ -367,7 +365,7 @@ def __load_features(
                                                 'v_' + k + '-rgb.npz')
 
             rgb_feature, rgb_frame_cnt = __process_feature_file(
-                rgb_feature_file)
+                rgb_feature_file)     # (40,320,1024), 5143
 
             dataset_dict[k]['frame_cnt'] = rgb_frame_cnt
             dataset_dict[k]['rgb_feature'] = rgb_feature
@@ -382,7 +380,7 @@ def __load_features(
                                                  'v_' + k + '-flow.npz')
 
             flow_feature, flow_frame_cnt = __process_feature_file(
-                flow_feature_file)
+                flow_feature_file)   # (40,320,1024), 5143
 
             dataset_dict[k]['frame_cnt'] = flow_frame_cnt
             dataset_dict[k]['flow_feature'] = flow_feature
@@ -468,9 +466,9 @@ def __load_background(
 def get_dataset(dataset_name,
                 subset,
                 file_paths,
-                sample_rate,
-                base_sample_rate,
-                action_class_num,
+                sample_rate,  # 16
+                base_sample_rate,  # 4
+                action_class_num,  # 20
                 modality='both',
                 feature_type=None,
                 feature_oversample=True,
