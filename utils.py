@@ -181,7 +181,7 @@ def load_annotation_file(anno_file):
     anno_data = np.array(anno_data)
     return anno_data
 
-
+# 创建一个字典保存数据集信息，可以用其它的吧
 def __get_thumos14_meta(meta_file, anno_dir):
 
     meta_data = load_meta(meta_file)
@@ -399,7 +399,7 @@ def __load_background(
         dataset_dict,  # dataset_dict will be modified
         dataset_name,
         bg_mask_dir,
-        sample_rate,
+        sample_rate,  #16
         action_class_num):
 
     bg_mask_files = os.listdir(bg_mask_dir)
@@ -418,7 +418,7 @@ def __load_background(
             continue
 
         bg_mask = np.load(os.path.join(bg_mask_dir, bg_mask_file))
-        bg_mask = bg_mask['mask']
+        bg_mask = bg_mask['mask']   # [0,0,0,0,0,1,1,1,1......]  (5143,)   指示视频帧是背景帧？？
 
         assert (dataset_dict[video_name]['frame_cnt'] == bg_mask.shape[0])
 
@@ -430,11 +430,12 @@ def __load_background(
 
         bg_mask = bg_mask[::sample_rate]  # sample rate of original videos
 
-        dataset_dict[new_key] = {}
+        # 记录属于背景帧的特征
+        dataset_dict[new_key] = {}   # new_key = video_name + '_bg'
 
         if type(dataset_dict[video_name]['rgb_feature']) != int:
 
-            rgb = np.array(dataset_dict[video_name]['rgb_feature'])
+            rgb = np.array(dataset_dict[video_name]['rgb_feature'])  # (40,121,1024)
             bg_mask = bg_mask[:rgb.shape[1]]  # same length
             bg_rgb = rgb[:, bg_mask.astype(bool), :]
             dataset_dict[new_key]['rgb_feature'] = bg_rgb
@@ -452,6 +453,7 @@ def __load_background(
             frame_cnt = bg_flow.shape[
                 1]  # Psuedo frame count of a virtual bg video
 
+        # 背景的信息
         dataset_dict[new_key]['annotations'] = {action_class_num: []}
         dataset_dict[new_key]['labels'] = [action_class_num]  # background class
 
