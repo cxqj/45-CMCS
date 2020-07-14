@@ -25,20 +25,20 @@ def get_diversity_loss(scores):
 
     softmax_scores = [F.softmax(i, dim=2) for i in scores]
 
-    S1 = torch.stack(softmax_scores).permute(1, 3, 0, 2)
-    S2 = torch.stack(softmax_scores).permute(1, 3, 2, 0)
-    S1_norm = S1.norm(p=2, dim=3, keepdim=True)  # + 1e-6 carefule here
-    S2_norm = S2.norm(p=2, dim=2, keepdim=True)  #
+    S1 = torch.stack(softmax_scores).permute(1, 3, 0, 2)  # (1,21,4,320)
+    S2 = torch.stack(softmax_scores).permute(1, 3, 2, 0)  # (1,21,320,4)
+    S1_norm = S1.norm(p=2, dim=3, keepdim=True)  # + 1e-6 carefule here  (1,21,4,1)
+    S2_norm = S2.norm(p=2, dim=2, keepdim=True)  # (1,21,1,4)
 
-    R = torch.matmul(S1, S2) / (torch.matmul(S1_norm, S2_norm) + 1e-6)
+    R = torch.matmul(S1, S2) / (torch.matmul(S1_norm, S2_norm) + 1e-6)  # (1,21,4,4)
 
-    I = torch.eye(len(scores)).to(device)
-    I = I.repeat((R.shape[0], R.shape[1], 1, 1))
+    I = torch.eye(len(scores)).to(device)  # (4,4)
+    I = I.repeat((R.shape[0], R.shape[1], 1, 1))  # (1,21,4,4)
 
-    pair_num = len(scores) * (len(scores) - 1)
+    pair_num = len(scores) * (len(scores) - 1)  # 4 X 3
 
-    loss_div = F.relu(R - I).sum(-1).sum(-1) / pair_num
-    loss_div = loss_div.mean()
+    loss_div = F.relu(R - I).sum(-1).sum(-1) / pair_num  # (1,21)
+    loss_div = loss_div.mean()  # 0.9994
 
     return loss_div
 
@@ -49,13 +49,13 @@ def get_norm_regularization(scores):
 
     assert (video_len > 0)
 
-    S_raw = torch.stack(scores).permute(1, 3, 0, 2)
-    S_raw_norm = S_raw.norm(p=1, dim=3) / video_len
+    S_raw = torch.stack(scores).permute(1, 3, 0, 2)  # (1,21,4,10)
+    S_raw_norm = S_raw.norm(p=1, dim=3) / video_len  # (1,21,4)
 
     deviations = S_raw_norm - S_raw_norm.mean(dim=2, keepdim=True).repeat(
-        1, 1, S_raw_norm.shape[2])
+        1, 1, S_raw_norm.shape[2])  # (1,21,4)
 
-    loss_norm = torch.abs(deviations).mean()
+    loss_norm = torch.abs(deviations).mean()  # 0.06
 
     return loss_norm
 
