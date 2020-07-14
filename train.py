@@ -193,6 +193,7 @@ if __name__ == '__main__':
         if not os.path.exists(save_dir):
             os.makedirs(save_dir)
 
+        # 构建模型
         if modality == 'both':
             model = BackboneNet(in_features=feature_dim * 2,
                                 **model_params).to(device)
@@ -356,6 +357,7 @@ if __name__ == '__main__':
                                             random_select=False,
                                             max_len=None)
 
+    # 注意这里的batch_size = 1是因为他用了数据增强
     train_train_loader = torch.utils.data.DataLoader(train_train_dataset,
                                                      batch_size=1,
                                                      pin_memory=True,
@@ -393,7 +395,7 @@ if __name__ == '__main__':
 
         test_test_loader = None
 
-    for run_idx in range(train_run_num):
+    for run_idx in range(train_run_num):  # 3
 
         naming = '{}-run-{}'.format(experiment_naming, run_idx)
 
