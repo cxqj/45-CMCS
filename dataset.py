@@ -10,13 +10,13 @@ import pdb
 
 def _random_select(rgb=-1, flow=-1):
     ''' Randomly select one augmented feature sequence. '''
-
+  
     if type(rgb) != int and type(flow) != int:
 
         assert (rgb.shape[0] == flow.shape[0])
         random_idx = random.randint(0, rgb.shape[0] - 1)
-        rgb = np.array(rgb[random_idx, :, :])
-        flow = np.array(flow[random_idx, :, :])
+        rgb = np.array(rgb[random_idx, :, :])   # (40,70,1024)-->(70,1024)
+        flow = np.array(flow[random_idx, :, :]) # (40,70,1024)-->(70,1024)
 
     elif type(rgb) != int:
         random_idx = random.randint(0, rgb.shape[0] - 1)
@@ -87,13 +87,13 @@ class SingleVideoDataset(Dataset):
         video = self.video_list[idx]
 
         rgb, flow = (self.dataset_dict[video]['rgb_feature'],
-                     self.dataset_dict[video]['flow_feature'])
+                     self.dataset_dict[video]['flow_feature'])  # (40,70,1024), (40,70,1024)
 
         if self.max_len:
             rgb, flow = _check_length(rgb, flow, self.max_len)
 
         if self.random_select:
-            rgb, flow = _random_select(rgb, flow)
+            rgb, flow = _random_select(rgb, flow)      # (70,1024),(70,1024)
 
         return_dict = {
             'video_name': video,
@@ -108,6 +108,18 @@ class SingleVideoDataset(Dataset):
         if self.single_label:
             return_dict['label'] = self.dataset_dict[video]['label_single']
             return_dict['weight'] = self.dataset_dict[video]['weight']
-
+            
+        """
+        return_dict example:
+             {'video_name':video_validation_0000683-0,
+             'rgb': (70,1024),
+             'flow':(70,1024),
+             'frame_rate':30,
+             'frame_cnt':1137,
+             'anno':[[0.3,5.5],[7.5,13.5],[15.9,18.1],[23.8,25.7]],
+             'label':0,
+             'weight':1.0  
+             }
+        """
         return return_dict
     
