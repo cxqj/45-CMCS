@@ -97,7 +97,7 @@
                 "meta_file":"./labels/thumos14-val-meta.mat",
                 "anno_dir":"./labels/thumos14-val-annotations",
                 "frames_dir":null,
-                "bg_mask_dir":"../THUMOS14_FEATURES/FLOW-INTENSITY/val",
+                "bg_mask_dir":"../THUMOS14_FEATURES/FLOW-INTENSITY/val",   # The folder of masks of static clips.
                 "feature_dir":{
                     # UNT features
                     "untri-resize":{
