@@ -11,9 +11,19 @@ import pdb
 
 class BackboneNet(nn.Module):
 
+    # in_features = 1024
+    # class_num = 
     def __init__(self, in_features, class_num, dropout_rate, cls_branch_num,
                  base_layer_params, cls_layer_params, att_layer_params):
         '''
+        in_features: 1024
+        class_num: 21
+        dropout_rate:0.5
+        cls_branch_num : 4
+        base_layer_params: [[32,1]]   # 32和1分别是输出通道和卷积核大小
+        cls_layer_params: [[16,3]]
+        att_layer_params: [[16,1]]
+
         Layer_params: 
         [[kerel_num_1, kernel_size_1],[kerel_num_2, kernel_size_2], ...]
         '''
@@ -27,12 +37,13 @@ class BackboneNet(nn.Module):
         self.dropout = nn.Dropout2d(
             p=dropout_rate)  # Drop same channels for untri features
 
+        # base_modele_list就是一个1D卷积层  1024-->32
         base_module_list = self._get_module_list(in_features, base_layer_params,
                                                  'base')
 
         self.base = nn.Sequential(OrderedDict(base_module_list))
 
-        cls_module_lists = []
+        cls_module_lists = []   # 32-->16
         for branch_idx in range(cls_branch_num):
             cls_module_lists.append(
                 self._get_module_list(base_layer_params[-1][0],
@@ -42,6 +53,7 @@ class BackboneNet(nn.Module):
         self.cls_bottoms = nn.ModuleList(
             [nn.Sequential(OrderedDict(i)) for i in cls_module_lists])
 
+        # 16-->21
         self.cls_heads = nn.ModuleList([
             nn.Linear(cls_layer_params[-1][0], class_num)
             for i in range(cls_branch_num)
@@ -49,11 +61,11 @@ class BackboneNet(nn.Module):
 
         if self.att_layer_params:
             att_module_list = self._get_module_list(base_layer_params[-1][0],
-                                                    att_layer_params, 'att')
+                                                    att_layer_params, 'att')  # 32-->16
 
             self.att_bottom = nn.Sequential(OrderedDict(att_module_list))
 
-            self.att_head = nn.Linear(att_layer_params[-1][0], 1)
+            self.att_head = nn.Linear(att_layer_params[-1][0], 1)   # 16-->1
         else:
             self.gap = nn.AdaptiveMaxPool1d(1)
 
@@ -68,8 +80,8 @@ class BackboneNet(nn.Module):
             else:
                 in_chl = layer_params[layer_idx - 1][0]
 
-            out_chl = layer_params[layer_idx][0]
-            kernel_size = layer_params[layer_idx][1]
+            out_chl = layer_params[layer_idx][0]   # 32
+            kernel_size = layer_params[layer_idx][1]  # 1
             conv_pad = kernel_size // 2
 
             module_list.append(('{}_conv_{}'.format(naming, layer_idx),
