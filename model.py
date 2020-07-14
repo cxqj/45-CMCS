@@ -101,23 +101,24 @@ class BackboneNet(nn.Module):
         base_feature = self.base(x_drop)  # (1,1024,70)-->(1,32,70)
 
         cls_features = []
-        branch_scores = []
+        branch_scores = []  # [(1,60,21),(1,60,21),(1,60,21),(1,60,21)]
 
         for branch_idx in range(self.cls_branch_num):
 
-            cls_feature = self.cls_bottoms[branch_idx](base_feature)  # (1,16,70)
-            cls_score = self.cls_heads[branch_idx](cls_feature.transpose(1, 2))  # (1,21,70)
+            cls_feature = self.cls_bottoms[branch_idx](base_feature)  # (1,16,60)
+            cls_score = self.cls_heads[branch_idx](cls_feature.transpose(1, 2))  # (1,60,21)
 
             cls_features.append(cls_feature)
             branch_scores.append(cls_score)
-
-        avg_score = torch.stack(branch_scores).mean(0)
+   
+        # 多分支得分平均获得最终得分
+        avg_score = torch.stack(branch_scores).mean(0)  # (1,60,21)  
 
         if self.att_layer_params:
-            att_feature = self.att_bottom(base_feature)
-            att_weight = self.att_head(att_feature.transpose(1, 2))
+            att_feature = self.att_bottom(base_feature)  # (1,32,60)-->(1,16,60)
+            att_weight = self.att_head(att_feature.transpose(1, 2))  # (1,60,16)-->(1,60,1)
             att_weight = F.softmax(att_weight, dim=1)
-            global_score = (avg_score * att_weight).sum(1)
+            global_score = (avg_score * att_weight).sum(1)  # 通过attion机制获取全局得分  (1,60,1)x(1,60,21)-->(1,21)
 
         else:
             att_feature = None
@@ -126,9 +127,16 @@ class BackboneNet(nn.Module):
 
         # for debug and future work
         feature_dict = {
-            'base_feature': base_feature,
-            'cls_features': cls_features,
+            'base_feature': base_feature,  # (1,32,60)
+            'cls_features': cls_features,  # [(1,16,60),(1,16,60),(1,16,60),(1,16,60)]
             #'att_feature': att_feature,
         }
-
+        # avg_score : (1,60,21)
+        # att_weight: (1,60,1)
+        # global_score: (1,21)
+        # branch_scores: [(1,60,21),(1,60,21),(1,60,21),(1,60,21)]
+        # feature_dict = {
+        #    'base_feature': base_feature,  # (1,32,60)
+        #    'cls_features': cls_features,  # [(1,16,60),(1,16,60),(1,16,60),(1,16,60)]
+        #     } 
         return avg_score, att_weight, global_score, branch_scores, feature_dict
