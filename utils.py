@@ -526,7 +526,7 @@ def get_dataset(dataset_name,
 
     return dataset_dict
 
-
+# 把每个视频的每个label再分离开来
 def get_single_label_dict(dataset_dict):
     '''
     If a video has multiple action classes, we treat it as multiple videos with
