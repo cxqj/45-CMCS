@@ -110,3 +110,4 @@ class SingleVideoDataset(Dataset):
             return_dict['weight'] = self.dataset_dict[video]['weight']
 
         return return_dict
+    
