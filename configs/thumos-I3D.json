@@ -1,27 +1,29 @@
 {
+    # 训练相关参数
     "experiment_naming":"thumos-I3D",
 
     "dataset_name":"thumos14",
     
     "feature_type":"i3d",
-    "feature_oversample":true,
+    "feature_oversample":true,  # 是否进行数据增强
     "sample_rate":16,
 
-    "with_bg":true,
-    "diversity_reg":true,
-    "diversity_weight":0.2,
+    "with_bg":true,       # 是否进行困难负样本挖掘
+    "diversity_reg":true,   # 是否使用diversity loss and norm regularization
+    "diversity_weight":0.2,  
 
-    "train_run_num":3,
+    "train_run_num":3,      # 实验重复的次数
 
-    "training_max_len":null,
-    "feature_dim":1024,
+    "training_max_len":null,    
+    "feature_dim":1024,   
 
     "batch_size":24,
     "learning_rate":1e-4,
     "learning_rate_decay":false,
     "weight_decay":1e-3,
     
-    "max_step_num":15005,
+    "max_step_num":15005,   # 训练迭代次数
+    
     "check_points":[
         15000
     ],
@@ -30,11 +32,11 @@
     "model_params":{
         "class_num":null,
         "dropout_rate":0.5,
-        "cls_branch_num":4,
+        "cls_branch_num":4,   # 多分支网络的分支数
         "base_layer_params":[
             [
-                32,
-                1
+                32,   # 卷积核大小
+                1     # 步长
             ]
         ],
         "cls_layer_params":[
@@ -52,6 +54,7 @@
     },
 
 
+    # 定位相关的参数
     "detect_params":{
         "global_score_thrh":0.1,
         "metric_type":"score",
@@ -68,14 +71,11 @@
     },
 
 
-
-
-
-
     "action_class_num":{
         "thumos14":20,
         "ActivityNet":null
     },
+
     "base_sample_rate":{
         "thumos14":{        
             "i3d":4,
@@ -99,6 +99,7 @@
                 "frames_dir":null,
                 "bg_mask_dir":"../THUMOS14_FEATURES/FLOW-INTENSITY/val",
                 "feature_dir":{
+                    # UNT features
                     "untri-resize":{
                         "rgb":"../THUMOS14_FEATURES/UNTRI-5/untri-thumos14-val-rgb-resize-step5",
                         "flow":"../THUMOS14_FEATURES/UNTRI-5/untri-thumos14-val-flow-resize-step5"
@@ -107,6 +108,7 @@
                         "rgb":"../THUMOS14_FEATURES/UNTRI-5/untri-thumos14-val-rgb-oversample-step5",
                         "flow":"../THUMOS14_FEATURES/UNTRI-5/untri-thumos14-val-flow-oversample-step5"
                     },
+                    # I3D features
                     "i3d-resize":{
                         "rgb":"../THUMOS14_FEATURES/I3D-4/thumos-val-rgb-resize",
                         "flow":"../THUMOS14_FEATURES/I3D-4/thumos-val-flow-resize"
@@ -131,6 +133,7 @@
                         "rgb":"../THUMOS14_FEATURES/UNTRI-5/untri-thumos14-test-rgb-oversample-step5",
                         "flow":"../THUMOS14_FEATURES/UNTRI-5/untri-thumos14-test-flow-oversample-step5"
                     },
+                
                     "i3d-resize":{
                         "rgb":"../THUMOS14_FEATURES/I3D-4/thumos-test-rgb-resize",
                         "flow":"../THUMOS14_FEATURES/I3D-4/thumos-test-flow-resize"
