@@ -230,6 +230,19 @@ def __get_thumos14_meta(meta_file, anno_dir):
             dataset_dict[video_name]['annotations'][action_label].append(
                 [start, end])
 
+    """
+    dataset_dict example:
+        {video_validation_0000266:{
+              "duration": 171.57,
+              'frame_rate':30,
+              'labels':[0,8],
+              'annotations':{
+                  0:[[72.8,76.4]],
+                  8:[[9.6,12.2],[12.4,21.8],[22.0,29.2],....[137.9,148.2]]
+              }
+        }}
+    
+    """
     return dataset_dict
 
 
