@@ -84,17 +84,17 @@ if __name__ == '__main__':
             cas_dir,
             subset,
             out_file_name,
-            global_score_thrh,
-            metric_type,
-            thrh_type,
-            thrh_value,
-            interpolate_type,
-            proc_type,
-            proc_value,
-            sample_offset,
-            weight_inner,
-            weight_outter,
-            weight_global,
+            global_score_thrh,   #0.1
+            metric_type,   # score
+            thrh_type,   # mean
+            thrh_value,  # 1
+            interpolate_type,  # linear
+            proc_type,   # dilation
+            proc_value,  # 20
+            sample_offset,  # 0
+            weight_inner,   # 1
+            weight_outter,  # -1
+            weight_global,  # 0.25
             att_filtering_value=None,
     ):
 
@@ -112,26 +112,26 @@ if __name__ == '__main__':
             cas_file = video_name + '.npz'
             cas_data = np.load(os.path.join(cas_dir, cas_file))
 
-            avg_score = cas_data['avg_score']
-            att_weight = cas_data['weight']
-            branch_scores = cas_data['branch_scores']
-            global_score = cas_data['global_score']
+            avg_score = cas_data['avg_score']   # (279,21)
+            att_weight = cas_data['weight']     # (279,1)
+            branch_scores = cas_data['branch_scores']  # (4,10,279,21)
+            global_score = cas_data['global_score']  # (21,)
 
-            duration = dataset_dict[video_name]['duration']
-            fps = dataset_dict[video_name]['frame_rate']
-            frame_cnt = dataset_dict[video_name]['frame_cnt']
+            duration = dataset_dict[video_name]['duration']  # 149.10
+            fps = dataset_dict[video_name]['frame_rate']  # 30
+            frame_cnt = dataset_dict[video_name]['frame_cnt']  # 4469
 
             global_score = softmax(global_score, dim=0)
 
             ################ Threshoding ################
             for class_id in range(action_class_num):
 
-                if global_score[class_id] <= global_score_thrh:
+                if global_score[class_id] <= global_score_thrh:   # global_score_thrh=0.1
                     continue
 
                 if metric_type == 'score':
 
-                    metric = softmax(avg_score, dim=1)[:, class_id:class_id + 1]
+                    metric = softmax(avg_score, dim=1)[:, class_id:class_id + 1]  # (279,1)
                     #metric = smooth(metric)
                     metric = normalize(metric)
 
