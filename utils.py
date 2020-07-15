@@ -843,7 +843,7 @@ def visualize_scores_barcodes(score_titles,
     assert (len(set(lens)) == 1)
     frame_cnt = lens[0]  # Not all frame are visualized, clipped at end
 
-    subplot_sum = len(score_titles)
+    subplot_sum = len(score_titles)   # 多少个bar
 
     fig = plt.figure(figsize=(20, 10))
 
@@ -860,34 +860,39 @@ def visualize_scores_barcodes(score_titles,
 
         plt.title(score_titles[j], position=(-0.1, 0))
 
-        axes = plt.gca()
+        axes = plt.gca()  # 如果当前轴不存在或不是极轴，将创建相应的轴，然后返回。
 
-        if j == 0:
+         # GT
+        if j == 0:  
             barprops = dict(aspect='auto',
-                            cmap=plt.cm.PiYG,
+                            cmap=plt.cm.PiYG,  
                             interpolation='nearest',
                             vmin=-1,
                             vmax=1)
-        elif j == 1:
+        # Baseline 
+        elif j == 1:   
             barprops = dict(aspect='auto',
-                            cmap=plt.cm.seismic,
+                            cmap=plt.cm.seismic,   
                             interpolation='nearest',
                             vmin=-1,
                             vmax=1)
-        elif j == 2 or j == 3:
+        
+        # Full / AVG CAS
+        elif j == 2 or j == 3:  
 
             if ylim:
                 barprops = dict(aspect='auto',
-                                cmap=plt.cm.Purples,
+                                cmap=plt.cm.Purples,  
                                 interpolation='nearest',
                                 vmin=ylim[0],
                                 vmax=ylim[1])
             else:
                 barprops = dict(
                     aspect='auto',
-                    cmap=plt.cm.Purples,  #BrBG
+                    cmap=plt.cm.Purples,  #BrBG   
                     interpolation='nearest')
 
+        # CAS1, CAS2, CAS3, CAS4
         else:
             if ylim:
                 barprops = dict(aspect='auto',
