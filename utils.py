@@ -724,11 +724,11 @@ def mask_to_detections(mask, metric, weight_inner, weight_outter):
     return out_detections
 
 
-def detect_with_thresholding(metric,
-                             thrh_type,
-                             thrh_value,
-                             proc_type,
-                             proc_value,
+def detect_with_thresholding(metric,      # (4449,1)
+                             thrh_type,   # mean
+                             thrh_value,  # 1
+                             proc_type,   # dilation
+                             proc_value,  # 20
                              debug_file=None):
 
     assert (thrh_type in ['max', 'mean'])
