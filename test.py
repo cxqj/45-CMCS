@@ -62,15 +62,16 @@ if __name__ == '__main__':
             assert (data['rgb'].shape[0] == 1)
             assert (data['flow'].shape[0] == 1)
 
-            rgb = data['rgb'].to(device).squeeze(0)  # 1 at dim0
-            flow = data['flow'].to(device).squeeze(0)
-            rgb = rgb.transpose(2, 1)
-            flow = flow.transpose(2, 1)
-            cat = torch.cat([rgb, flow], dim=1)
+            rgb = data['rgb'].to(device).squeeze(0)  # 1 at dim0  (10,279,1024)
+            flow = data['flow'].to(device).squeeze(0)  #(10,279,1024)
+            rgb = rgb.transpose(2, 1)    #(10,1024,279)
+            flow = flow.transpose(2, 1)  #(10,1024,279)
+            cat = torch.cat([rgb, flow], dim=1)  #(10,2048,279)
 
             with torch.no_grad():
 
                 if modality == 'both':
+                    # avg_score: (10,279,21) weight:(10,279,1) global_score:(10,21) branch_scores:[(10,279,21),(10,279,21),(10,279,21),(10,279,21)]
                     avg_score, weight, global_score, branch_scores, _ = model_both.forward(
                         cat)  # Add softmax
                 elif modality == 'rgb':
@@ -101,14 +102,14 @@ if __name__ == '__main__':
                             (branch_scores1[branch] + branch_scores2[branch]) /
                             2)
 
-            branch_scores = torch.stack(branch_scores).cpu().numpy()
+            branch_scores = torch.stack(branch_scores).cpu().numpy()  # (4,10,279,21)
 
             np.savez(os.path.join(save_dir, video_name + '.npz'),
-                     avg_score=avg_score.mean(0).cpu().numpy(),
-                     weight=weight.mean(0).cpu().numpy()
+                     avg_score=avg_score.mean(0).cpu().numpy(),   # (1,279,21)
+                     weight=weight.mean(0).cpu().numpy()   # (1,279,1)
                      if weight is not None else None,
-                     global_score=global_score.mean(0).cpu().numpy(),
-                     branch_scores=branch_scores)
+                     global_score=global_score.mean(0).cpu().numpy(),   # (1,21)
+                     branch_scores=branch_scores)  # (10,279,21)
 
     if args.include_train:
 
