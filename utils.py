@@ -188,6 +188,7 @@ def __get_thumos14_meta(meta_file, anno_dir):
 
     dataset_dict = {}
 
+    # 标注文件 .txt
     anno_files = [i for i in os.listdir(anno_dir) if 'Ambiguous' not in i]
     anno_files.remove('detclasslist.txt')
     anno_files.sort()
@@ -322,7 +323,7 @@ def __load_features(
     # sample_rate of feature sequences, not original video
 
     ###############
-    def __process_feature_file(filename):
+    def __process_feature_file(filename):   # filename为.npz文件路径
         ''' Load features from a single file. '''
 
         feature_data = np.load(filename)
@@ -337,7 +338,7 @@ def __load_features(
         # Feature: (B, T, F)
         # Example: (1, 249, 1024) or (10, 249, 1024) (Oversample)
 
-        # 把特征切成四分份？？
+        # 把特征切成四份
         if temporal_aug:  # Data augmentation with temporal offsets
             feature = [
                 feature[:, offset::f_sample_rate, :]
@@ -405,15 +406,32 @@ def __load_features(
             assert (dataset_dict[k]['rgb_feature'].mean() !=
                     dataset_dict[k]['flow_feature'].mean())
 
+            
+   """
+    dataset_dict example:
+        {video_validation_0000266:{
+              "duration": 171.57,
+              'frame_rate':30,
+              'labels':[0,8],
+              'annotations':{
+                  0:[[72.8,76.4]],
+                  8:[[9.6,12.2],[12.4,21.8],[22.0,29.2],....[137.9,148.2]]
+              }
+              'frame_cnt': 5143,
+              'rgb_feature':(40,320,1024),
+              'flow_feature':(40,320,1024)
+        }}
+    
+    """
     return dataset_dict
 
-
+# 向data_dict中添加背景信息
 def __load_background(
         dataset_dict,  # dataset_dict will be modified
-        dataset_name,
-        bg_mask_dir,
+        dataset_name,  
+        bg_mask_dir,  # '~/FLOW-INTENSITY/val'
         sample_rate,  #16
-        action_class_num):
+        action_class_num):  # 20
 
     bg_mask_files = os.listdir(bg_mask_dir)
     bg_mask_files.sort()
@@ -431,26 +449,26 @@ def __load_background(
             continue
 
         bg_mask = np.load(os.path.join(bg_mask_dir, bg_mask_file))
-        bg_mask = bg_mask['mask']   # [0,0,0,0,0,1,1,1,1......]  (5143,)   指示视频帧是背景帧？？
+        bg_mask = bg_mask['mask']   # [0,0,0,0,0,1,1,1,1......]  (5143,) 指示视频中那些帧是背景帧
 
         assert (dataset_dict[video_name]['frame_cnt'] == bg_mask.shape[0])
 
         # Remove if static clips are too long or too short
-        bg_ratio = bg_mask.sum() / bg_mask.shape[0]
+        bg_ratio = bg_mask.sum() / bg_mask.shape[0]  # context帧占总帧数的比例
         if bg_ratio < 0.05 or bg_ratio > 0.30:
             print('Bad bg {}: {}'.format(bg_ratio, video_name))
             continue
 
-        bg_mask = bg_mask[::sample_rate]  # sample rate of original videos
+        bg_mask = bg_mask[::sample_rate]  # sample rate of original videos   # 1949 / 14 = 122
 
-        # 记录属于背景帧的特征
+        # 采样属于背景帧的特征
         dataset_dict[new_key] = {}   # new_key = video_name + '_bg'
 
         if type(dataset_dict[video_name]['rgb_feature']) != int:
-
+            
             rgb = np.array(dataset_dict[video_name]['rgb_feature'])  # (40,121,1024)
-            bg_mask = bg_mask[:rgb.shape[1]]  # same length
-            bg_rgb = rgb[:, bg_mask.astype(bool), :]
+            bg_mask = bg_mask[:rgb.shape[1]]  # same length   # 采样bg_mask到和rgb特征等长
+            bg_rgb = rgb[:, bg_mask.astype(bool), :]     # 采样出属于背景帧的特征  # (40,19,1024)
             dataset_dict[new_key]['rgb_feature'] = bg_rgb
 
             frame_cnt = bg_rgb.shape[
@@ -475,6 +493,34 @@ def __load_background(
         dataset_dict[new_key]['frame_cnt'] = frame_cnt  # Psuedo
         dataset_dict[new_key]['duration'] = frame_cnt / fps  # Psuedo
 
+    """
+    dataset_dict example:
+        {video_validation_0000266:{
+              "duration": 171.57,
+              'frame_rate':30,
+              'labels':[0,8],
+              'annotations':{
+                  0:[[72.8,76.4]],
+                  8:[[9.6,12.2],[12.4,21.8],[22.0,29.2],....[137.9,148.2]]
+              }
+              'frame_cnt': 5143,
+              'rgb_feature':(40,320,1024),
+              'flow_feature':(40,320,1024)
+        },
+        .......
+        video_validation_0000266_bg:{
+              "duration": 0.63333,
+              'frame_rate':30,
+              'labels':[20],
+              'annotations':{20:[]}
+              'frame_cnt': 19,
+              'rgb_feature':(40,19,1024),
+              'flow_feature':(40,19,1024)
+        }
+        
+      }
+    
+    """
     return dataset_dict
 
 
@@ -503,6 +549,7 @@ def get_dataset(dataset_name,
     assert (modality in ['both', 'rgb', 'flow', None])
     assert (feature_type in ['i3d', 'untri'])
 
+    # 将txt文件信息转为dict，里面是数据集的信息
     if dataset_name == 'thumos14':
         dataset_dict = __get_thumos14_meta(
             meta_file=file_paths[subset]['meta_file'],
@@ -513,8 +560,8 @@ def get_dataset(dataset_name,
 
     _temp_f_type = (feature_type +
                     '-oversample' if feature_oversample else feature_type +
-                    '-resize')
-
+                    '-resize')  # i3d-oversample
+    # 特征路径
     if modality == 'both':
         rgb_dir = file_paths[subset]['feature_dir'][_temp_f_type]['rgb']
         flow_dir = file_paths[subset]['feature_dir'][_temp_f_type]['flow']
