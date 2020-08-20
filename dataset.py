@@ -7,7 +7,7 @@ from torch.utils.data import Dataset
 from utils import get_single_label_dict
 import pdb
 
-
+# 随机选择一个特征训练？？
 def _random_select(rgb=-1, flow=-1):
     ''' Randomly select one augmented feature sequence. '''
   
