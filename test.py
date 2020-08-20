@@ -80,7 +80,7 @@ if __name__ == '__main__':
                 elif modality == 'flow':
                     avg_score, weight, global_score, branch_scores, _ = model_flow.forward(
                         flow)
-                else:
+                else:   # late-fusion
                     avg_score1, weight1, global_score1, branch_scores1, _ = model_rgb.forward(
                         rgb)
                     avg_score2, weight2, global_score2, branch_scores2, _ = model_flow.forward(
@@ -105,11 +105,11 @@ if __name__ == '__main__':
             branch_scores = torch.stack(branch_scores).cpu().numpy()  # (4,10,279,21)
 
             np.savez(os.path.join(save_dir, video_name + '.npz'),
-                     avg_score=avg_score.mean(0).cpu().numpy(),   # (1,279,21)
-                     weight=weight.mean(0).cpu().numpy()   # (1,279,1)
+                     avg_score=avg_score.mean(0).cpu().numpy(),   # (10,279,21)
+                     weight=weight.mean(0).cpu().numpy()   # (10,279,1)
                      if weight is not None else None,
-                     global_score=global_score.mean(0).cpu().numpy(),   # (1,21)
-                     branch_scores=branch_scores)  # (10,279,21)
+                     global_score=global_score.mean(0).cpu().numpy(),   # (10,21)
+                     branch_scores=branch_scores)  # (4,10,279,21)
 
     if args.include_train:
 
@@ -138,6 +138,19 @@ if __name__ == '__main__':
     else:
         train_detect_loader = None
 
+    """
+    dataset_dict example:
+        {video_test_0000324:{
+              "duration": 171.57,
+              'frame_rate':30,
+              'labels':[0],
+              'annotations':{0:[[49.2,53.5],[116.7,122.5]]}
+              'frame_cnt': 4469,
+              'rgb_feature':(40,278,1024),
+              'flow_feature':(40,278,1024)，
+        }, 
+      }  
+    """
     test_dataset_dict = get_dataset(
         dataset_name=dataset_name,
         subset=args.test_subset_name,
