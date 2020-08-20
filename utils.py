@@ -67,7 +67,7 @@ def load_config_file(config_file):
     all_params['base_sample_rate'] = all_params['base_sample_rate'][dataset_name][feature_type]  # 4
     all_params['base_snippet_size'] = all_params['base_snippet_size'][feature_type]  # 16
 
-    assert (all_params['sample_rate'] % all_params['base_sample_rate'] == 0)
+    assert (all_params['sample_rate'] % all_params['base_sample_rate'] == 0)  # 16 % 4
 
     all_params['model_class_num'] = all_params['action_class_num']  # 20
     if all_params['with_bg']:
