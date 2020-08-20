@@ -607,6 +607,38 @@ def get_single_label_dict(dataset_dict):
 
             new_dict[new_key]['old_key'] = k
 
+     """
+    dataset_dict example:
+        {video_validation_0000266-0:{
+              "duration": 171.57,
+              'frame_rate':30,
+              'labels':[0,8],
+              'annotations':{[[72.8,76.4]]
+              }
+              'frame_cnt': 5143,
+              'rgb_feature':(40,320,1024),
+              'flow_feature':(40,320,1024)，
+              'label_single': 0,
+              'weight':0.5,
+              'old_key':'video_validation_0000266'
+        },
+        video_validation_0000266-8:{
+              "duration": 171.57,
+              'frame_rate':30,
+              'labels':[0,8],
+              'annotations':{[[9.6,12.2],[12.4,21.8],[22.0,29.2],....[137.9,148.2]]
+              }
+              'frame_cnt': 5143,
+              'rgb_feature':(40,320,1024),
+              'flow_feature':(40,320,1024)，
+              'label_single': 8,
+              'weight':0.5,
+              'old_key':'video_validation_0000266'
+        },
+        ........
+      }
+    
+    """
     return new_dict  # This dict should be read only
 
 
