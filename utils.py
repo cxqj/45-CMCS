@@ -702,7 +702,7 @@ def __get_frame_ticks(feature_type, frame_cnt, sample_rate, snippet_size=None):
 
     return frame_ticks
 
-
+# 对于每个类别的CAS进行线性插值
 def interpolate(x,
                 feature_type,
                 frame_cnt,
