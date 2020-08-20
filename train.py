@@ -80,7 +80,7 @@ if __name__ == '__main__':
     print(args.test_subset_name)
     print(args.test_log)
 
-    all_params = load_config_file(args.config_file)
+    all_params = load_config_file(args.config_file)  # 获取所有参数
     locals().update(all_params)
 
     def test(model, loader, modality):
@@ -105,6 +105,19 @@ if __name__ == '__main__':
 
             model.eval()
 
+            """
+             data:
+             {'video_name':video_validation_0000683-0,
+             'rgb': (70,1024),
+             'flow':(70,1024),
+             'frame_rate':30,
+             'frame_cnt':1137,
+             'anno':[[0.3,5.5],[7.5,13.5],[15.9,18.1],[23.8,25.7]],
+             'label':0,
+             'weight':1.0  
+             }
+            
+            """
             for _, data in enumerate(loader):  # No shuffle
 
                 video_name = data['video_name'][0]
@@ -125,8 +138,8 @@ if __name__ == '__main__':
                 else:
                     model_input = data['flow'].to(device).squeeze(0)
 
-                model_input = model_input.transpose(2, 1)
-                _, _, out, scores, _ = model(model_input)
+                model_input = model_input.transpose(2, 1)   # (1,1024,70)
+                _, _, out, scores, _ = model(model_input)   # out: (1,21)  scores:  [(1,60,21),(1,60,21),(1,60,21),(1,60,21)]
 
                 out = out.mean(0, keepdim=True)
 
@@ -222,7 +235,7 @@ if __name__ == '__main__':
             'sum': 0,
         }
 
-        while update_step_idx < max_step_num:
+        while update_step_idx < max_step_num: # 10005
 
             # Train loop
             for _, data in enumerate(train_train_loader):
@@ -334,6 +347,35 @@ if __name__ == '__main__':
                     if update_step_idx >= max_step_num:
                         break
 
+    # 创建训练集数据信息字典
+     """
+    dataset_dict example:
+        {video_validation_0000266:{
+              "duration": 171.57,
+              'frame_rate':30,
+              'labels':[0,8],
+              'annotations':{
+                  0:[[72.8,76.4]],
+                  8:[[9.6,12.2],[12.4,21.8],[22.0,29.2],....[137.9,148.2]]
+              }
+              'frame_cnt': 5143,
+              'rgb_feature':(40,320,1024),
+              'flow_feature':(40,320,1024)
+        },
+        .......
+        video_validation_0000266_bg:{
+              "duration": 0.63333,
+              'frame_rate':30,
+              'labels':[20],
+              'annotations':{20:[]}
+              'frame_cnt': 19,
+              'rgb_feature':(40,19,1024),
+              'flow_feature':(40,19,1024)
+        }
+        
+      }
+    
+    """
     train_dataset_dict = get_dataset(dataset_name=dataset_name,
                                      subset=args.train_subset_name,
                                      file_paths=file_paths,
@@ -346,6 +388,39 @@ if __name__ == '__main__':
                                      temporal_aug=True,
                                      load_background=with_bg)
 
+    # 一个视频可能包含多个label，将data_dict中的多个label拆分开
+    """
+    dataset_dict example:
+        {video_validation_0000266-0:{
+              "duration": 171.57,
+              'frame_rate':30,
+              'labels':[0,8],
+              'annotations':{[[72.8,76.4]]
+              }
+              'frame_cnt': 5143,
+              'rgb_feature':(40,320,1024),
+              'flow_feature':(40,320,1024)，
+              'label_single': 0,
+              'weight':0.5,
+              'old_key':'video_validation_0000266'
+        },
+        video_validation_0000266-8:{
+              "duration": 171.57,
+              'frame_rate':30,
+              'labels':[0,8],
+              'annotations':{[[9.6,12.2],[12.4,21.8],[22.0,29.2],....[137.9,148.2]]
+              }
+              'frame_cnt': 5143,
+              'rgb_feature':(40,320,1024),
+              'flow_feature':(40,320,1024)，
+              'label_single': 8,
+              'weight':0.5,
+              'old_key':'video_validation_0000266'
+        },
+        ........
+      }
+    
+    """
     train_train_dataset = SingleVideoDataset(
         train_dataset_dict,
         single_label=True,
@@ -369,7 +444,19 @@ if __name__ == '__main__':
                                                     shuffle=False)
 
     if args.test_log:
-
+    """
+    dataset_dict example:
+        {video_test_0000324:{
+              "duration": 171.57,
+              'frame_rate':30,
+              'labels':[0],
+              'annotations':{0:[[49.2,53.5],[116.7,122.5]]}
+              'frame_cnt': 4469,
+              'rgb_feature':(40,278,1024),
+              'flow_feature':(40,278,1024)，
+        }, 
+      }  
+    """
         test_dataset_dict = get_dataset(dataset_name=dataset_name,
                                         subset=args.test_subset_name,
                                         file_paths=file_paths,
