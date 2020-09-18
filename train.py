@@ -18,7 +18,7 @@ import pdb
 
 device = torch.device('cuda')
 
-
+# 论文公式(4)的实现
 def get_diversity_loss(scores):
 
     assert (len(scores) > 1)
