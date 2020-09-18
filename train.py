@@ -32,11 +32,13 @@ def get_diversity_loss(scores):
 
     R = torch.matmul(S1, S2) / (torch.matmul(S1_norm, S2_norm) + 1e-6)  # (1,21,4,4)
 
-    I = torch.eye(len(scores)).to(device)  # (4,4)
+    # 因为计算相似度时，自身与自身的相似度为1，因此需要计算Loss时，需要去除自身与自身计算相似度带来的影响
+    I = torch.eye(len(scores)).to(device)  # (4,4) 
     I = I.repeat((R.shape[0], R.shape[1], 1, 1))  # (1,21,4,4)
 
     pair_num = len(scores) * (len(scores) - 1)  # 4 X 3
 
+    # F.relu是为了可导
     loss_div = F.relu(R - I).sum(-1).sum(-1) / pair_num  # (1,21)
     loss_div = loss_div.mean()  # 0.9994
 
